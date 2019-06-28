@@ -68,15 +68,14 @@ function processVideo(fileName, dirName){
 		let filePath = path.join(tmp, dirName, fileName)
 		console.log(`Procesando ${videoPath}`);
 		let imagesFolder = filePath.split('.').slice(0, -1).join('.');
+		let onlyName = fileName.split('.').slice(0, -1).join('.');
 		if (!fs.existsSync(imagesFolder)){
 			fs.mkdirSync(imagesFolder);
 		};
-	        let output = path.join(imagesFolder, `./${fileName}-%d.png`);
+	        let output = path.join(imagesFolder, `./${onlyName}-%d.png`);
       	        let cmd = ffmpeg(videoPath);
-		cmd.outputOptions([
-			'-r', Math.max(1, 12)
-		]);
-		return resolve(dirName);
+		cmd.outputOptions([ '-r', Math.max(1, 12) ]);
+		//return resolve(dirName);
 		return new Promise((convertResolve, convertReject) => {
 			  cmd
 			    .on('end', () => convertResolve(output))
@@ -84,7 +83,7 @@ function processVideo(fileName, dirName){
 			    .output(output)
 			    .run();
 		}).then( () => { 
-			resolve(dirName);
+			return resolve(dirName);
 		});
 	});
 }

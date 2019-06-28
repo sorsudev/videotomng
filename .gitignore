@@ -1,3 +1,4 @@
 node_modules/*
 snaps/*
 package-lock.json
+tmp/*

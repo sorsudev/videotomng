@@ -72,19 +72,30 @@ function processVideo(fileName, dirName){
 		if (!fs.existsSync(imagesFolder)){
 			fs.mkdirSync(imagesFolder);
 		};
-	        let output = path.join(imagesFolder, `./${onlyName}-%d.png`);
-      	        let cmd = ffmpeg(videoPath);
-		cmd.outputOptions([ '-r', Math.max(1, 12) ]);
-		//return resolve(dirName);
-		return new Promise((convertResolve, convertReject) => {
-			  cmd
-			    .on('end', () => convertResolve(output))
-			    .on('error', (err) => convertReject(err))
-			    .output(output)
-			    .run();
-		}).then( () => { 
-			return resolve(dirName);
+	        let output = path.join(imagesFolder, `./%6d.png`);
+      	        let cmd = ffmpeg(videoPath).audioCodec('libmp3lame').audioChannels(2);
+		cmd.outputOptions([ '-r', 12]);
+		let promises = [];
+		promises.push(process(cmd, output, true));
+	        output = path.join(imagesFolder, `${onlyName}.mp3`);
+		promises.push(process(cmd, output));
+		Promise.all(promises).then( async() => {
+			resolve(dirName);
+			//const rimraf = require('rimraf');
+			//setTimeout( () => {
+				//return rimraf(imagesPath, () => { });
+			//}, 1000);
 		});
+	});
+}
+
+function process(cmd, output, remove = false){
+	return new Promise((resolve, reject) => {
+		cmd
+			.on('end', () => { resolve(output) })
+			.on('error', (err) => reject(err))
+			.output(output)
+			.run();
 	});
 }
 

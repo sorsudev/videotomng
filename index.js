@@ -65,7 +65,8 @@ function processFolder(dirName, index){
 function processVideo(fileName, dirName){
     return new Promise( (resolve, reject) => {
         let videoPath = path.join(snaps, dirName, fileName);
-        let filePath = path.join(tmp, dirName, fileName)
+        let basePath = path.join(tmp, dirName);
+        let filePath = path.join(basePath, fileName)
         console.log(`Procesando ${videoPath}`);
         let imagesFolder = filePath.split('.').slice(0, -1).join('.').replace(/\s|\(|\)/g, '-')
         let onlyName = fileName.split('.').slice(0, -1).join('.');
@@ -73,11 +74,11 @@ function processVideo(fileName, dirName){
             fs.mkdirSync(imagesFolder);
         }
         let output = path.join(imagesFolder, `./%6d.png`);
-        let cmd = ffmpeg(videoPath).audioCodec('libmp3lame').audioChannels(2);
+        let cmd = ffmpeg(videoPath).seekInput(1).audioCodec('libmp3lame').audioChannels(2);
         cmd.outputOptions([ '-r', 12]);
         let promises = [];
         promises.push(process(cmd, output, true));
-        output = path.join(imagesFolder, `${onlyName}.mp3`);
+        output = path.join(basePath, `${onlyName}.mp3`);
         promises.push(process(cmd, output));
         Promise.all(promises).then( async() => {
             const util = require('util');
@@ -85,14 +86,14 @@ function processVideo(fileName, dirName){
             let onlyImagesPath = `${imagesFolder}/\*.png`;
 
             async function createMng()  {
-                const { stdout, stderr } = await exec(`advmng -a 12 "${imagesFolder}/${onlyName}.mng" ${onlyImagesPath}`);
+                const { stdout, stderr } = await exec(`advmng -a 12 "${basePath}/${onlyName}.mng" ${onlyImagesPath}`);
 
                 if (stderr) {
                     console.error(`error: ${stderr}`);
                 }
                 const rimraf = require('rimraf');
                 setTimeout( () => {
-                    return rimraf(onlyImagesPath, () => {
+                    return rimraf(imagesFolder, () => {
                         return resolve(dirName);
                     });
                 }, 1000);
